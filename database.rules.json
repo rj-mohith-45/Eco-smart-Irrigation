@@ -1,0 +1,10 @@
+{
+  "rules": {
+    "users": {
+      "$phone_number": {
+        ".read": "auth != null && auth.token.phone_number === $phone_number",
+        ".write": "auth != null && auth.token.phone_number === $phone_number"
+      }
+    }
+  }
+}

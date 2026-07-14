@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoSmart Irrigation Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="eco.css">
+</head>
+
+<body>
+
+    <!-- Step 2: Login Section Container (matches color scheme, hidden/shown via Auth states) -->
+    <div id="login-container" class="login-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <span class="login-logo">🌿</span>
+                <h2>EcoSmart Irrigation</h2>
+                <p>Verify your phone number to access the dashboard</p>
+            </div>
+            <div id="phone-step">
+                <div class="input-field-group">
+                    <label for="phone-number">Phone Number</label>
+                    <input type="tel" id="phone-number" placeholder="+91XXXXXXXXXX" value="+91">
+                </div>
+                <div id="recaptcha-container"></div>
+                <button id="btn-send-otp" class="btn-primary">Send Verification Code</button>
+            </div>
+            <div id="otp-step" style="display: none;">
+                <div class="input-field-group">
+                    <label for="otp-code">Verification Code</label>
+                    <input type="text" id="otp-code" placeholder="Enter 6-digit OTP">
+                </div>
+                <button id="btn-verify-otp" class="btn-primary">Verify & Login</button>
+                <button id="btn-back-phone" class="btn-secondary">Change Phone Number</button>
+            </div>
+            <div id="login-error" class="error-msg" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Step 2: Existing Dashboard HTML wrapped in a container that is hidden by default -->
+    <div class="glass-container" id="dashboard-container" style="display: none;">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">🌿 <h2>EcoSmart</h2>
+                </div>
+                <div class="theme-toggle-container">
+                    <span id="theme-text" class="theme-label">Dark Mode</span>
+                    <label class="toggle-ui">
+                        <input type="checkbox" id="theme-checkbox">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <button id="nav-home" class="nav-btn active">🏠 Home</button>
+                <button id="nav-auto" class="nav-btn">⚙️ Auto Console</button>
+                <button id="nav-ai" class="nav-btn">🧠 AI & Analytics</button>
+                <!-- Sidebar signout option -->
+                <button id="nav-logout" class="nav-btn" style="margin-top: 15px; border-color: rgba(239, 68, 68, 0.3); color: #ef4444;">🚪 Logout</button>
+            </nav>
+
+            <div class="compact-setting">
+                <span>Auto Logic Master</span>
+                <label class="toggle-ui">
+                    <input type="checkbox" id="auto_logic_master">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="status-card" id="weather-box">
+                <div id="weather-icon">☀️</div>
+                <h3 id="weather-text">Clear Skies</h3>
+            </div>
+
+            <div class="activity-panel">
+                <div class="panel-header">
+                    <h3>Activity Feed</h3>
+                    <button id="btn-download">📥</button>
+                </div>
+                <div id="status-feed" class="console-box">
+                    <p class="log-entry system">[00:00:00] System Initialized...</p>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <!-- View 1: Home/Field Status -->
+            <div id="view-home" class="view-panel">
+                <header class="header">
+                    <h1>Field Status</h1>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <!-- Step 2: Sign Out Button added to the main header -->
+                        <button id="btn-signout" class="nav-btn" style="border-color: rgba(239, 68, 68, 0.3); color: #ef4444; padding: 6px 12px; font-size: 0.9rem; border-radius: 8px; cursor: pointer; background: none; transition: 0.3s; font-weight: 600;">🚪 Sign Out</button>
+                        <div class="sync-pill"><span class="dot"></span> <span id="sync-text">Syncing...</span></div>
+                    </div>
+                </header>
+
+                <section class="gauge-section">
+                    <div class="card gauge-card">
+                        <div class="svg-wrapper">
+                            <svg viewBox="0 0 100 55">
+                                <path fill="none" class="gauge-bg" d="M10,50 A40,40 0 0,1 90,50" />
+                                <path fill="none" class="gauge-fill" id="fill1" d="M10,50 A40,40 0 0,1 90,50" />
+                            </svg>
+                            <div class="gauge-info"><span class="gauge-val" id="val1">0</span>%</div>
+                        </div>
+                        <h4>Zone 1 Moisture</h4>
+                    </div>
+                    <div class="card gauge-card">
+                        <div class="svg-wrapper">
+                            <svg viewBox="0 0 100 55">
+                                <path fill="none" class="gauge-bg" d="M10,50 A40,40 0 0,1 90,50" />
+                                <path fill="none" class="gauge-fill" id="fill2" d="M10,50 A40,40 0 0,1 90,50" />
+                            </svg>
+                            <div class="gauge-info"><span class="gauge-val" id="val2">0</span>%</div>
+                        </div>
+                        <h4>Zone 2 Moisture</h4>
+                    </div>
+                </section>
+
+                <div class="control-grid">
+                    <section class="card">
+                        <h3>Manual Control</h3>
+                        <div class="control-list">
+                            <div class="control-row master">
+                                <div><strong>Master Motor</strong><br><span class="sub-text">Primary Pump</span></div>
+                                  <label class="toggle-ui"><input type="checkbox" id="motor_on"><span class="slider"></span></label>
+                            </div>
+                            <div class="control-row v-row disabled" id="v1-row">
+                                <div><strong>Valve 1</strong><br><span class="sub-text">Zone A</span></div>
+                                <label class="toggle-ui"><input type="checkbox" id="valve1_on" disabled><span class="slider"></span></label>
+                            </div>
+                            <div class="control-row v-row disabled" id="v2-row">
+                                <div><strong>Valve 2</strong><br><span class="sub-text">Zone B</span></div>
+                                <label class="toggle-ui"><input type="checkbox" id="valve2_on" disabled><span class="slider"></span></label>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- View 2: Auto Configuration Thresholds -->
+            <div id="view-auto" class="view-panel" style="display:none;">
+                <header class="header">
+                    <div>
+                        <h1>Auto-Irrigation Console</h1>
+                        <p class="sub-text">Configure specific ON and OFF moisture thresholds for each zone.</p>
+                    </div>
+                </header>
+
+                <div class="card setup-card">
+                    <div class="setup-item">
+                        <label>Zone 1 Thresholds</label>
+                        <div class="input-group">
+                            <div><span class="threshold-label">Turn ON below (%)</span><input type="number" id="v1_on_thresh" value="45"></div>
+                            <div><span class="threshold-label">Turn OFF above (%)</span><input type="number" id="v1_off_thresh" value="78"></div>
+                        </div>
+                    </div>
+                    <div class="setup-item" style="margin-top: 15px;">
+                        <label>Zone 2 Thresholds</label>
+                        <div class="input-group">
+                            <div><span class="threshold-label">Turn ON below (%)</span><input type="number" id="v2_on_thresh" value="44"></div>
+                            <div><span class="threshold-label">Turn OFF above (%)</span><input type="number" id="v2_off_thresh" value="66"></div>
+                        </div>
+                    </div>
+                    <button id="btn-save-auto" class="btn-primary">Apply Configuration</button>
+                </div>
+            </div>
+
+            <!-- View 3: AI & Analytics Model -->
+            <div id="view-ai" class="view-panel" style="display:none;">
+                <header class="header">
+                    <div>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <span style="font-size: 2rem;">🧠</span>
+                            <h1 style="margin: 0; color: var(--aiColor)">AI & Analytics</h1>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="card">
+                    <h3 style="margin-top: 0; color: var(--primary);">Daily Water Efficiency Model</h3>
+                    <p class="sub-text">Input your farm variables to calculate real-world savings based on ESP32 travel timers.</p>
+
+                    <div class="setup-item" style="margin-top: 15px;">
+                        <div class="input-group">
+                            <div><span class="threshold-label">Distance to Field (km)</span><input type="number" id="calc-dist" value="5"></div>
+                            <div><span class="threshold-label">Travel Speed (km/h)</span><input type="number" id="calc-speed" value="45"></div>
+                            <div><span class="threshold-label">Pump Flow Rate (L/min)</span><input type="number" id="calc-flow" value="30"></div>
+                        </div>
+                    </div>
+                    <button id="btn-render-chart" class="btn-primary" style="margin-top: 20px; width: auto; padding: 10px 20px;">Generate Log Charts</button>
+
+                    <div style="margin-top: 30px; height: 250px;">
+                        <canvas id="usageChart"></canvas>
+                    </div>
+                    <div style="margin-top: 30px; height: 250px;">
+                        <canvas id="savedChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card setup-card" style="max-width: none;">
+                    <h3 style="margin-top: 0;">Computer Vision Analysis</h3>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <input type="file" id="ai-file-input" accept="image/*" style="display: none;">
+                        <button id="btn-select-photo" class="ai-btn">📷 Select Field Photo</button>
+                        <button id="btn-analyze-photo" class="btn-primary" style="margin-top: 0; max-width: 200px; display: none;">Analyze with AI</button>
+                        <span id="ai-loading" style="display: none; color: var(--aiColor); font-weight: bold;">Processing...</span>
+                    </div>
+                    <img id="ai-img-preview" class="img-preview" src="">
+                    <div id="ai-response-container" class="ai-result"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- External Helpers -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Step 3: Javascript treated as a module -->
+    <script type="module" src="eco.js"></script>
+</body>
+
+</html>
