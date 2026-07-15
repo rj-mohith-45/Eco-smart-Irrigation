@@ -18,8 +18,8 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-// INIT GEMINI AI
-const genAI = new GoogleGenerativeAI("AIzaSyAlMPIghXBZqDBbLi3B3FqCISBY9KUddmE");
+// INIT GEMINI AI (⚠️ SECURITY WARNING: Replace with your key for local testing, keep placeholder on GitHub)
+const genAI = new GoogleGenerativeAI("YOUR_GEMINI_API_KEY");
 let activeSystemState = {};
 let uploadedBase64Image = null;
 
@@ -205,6 +205,8 @@ onAuthStateChanged(auth, (user) => {
             const mActive = data.motor_on || false;
             const v1Row = document.getElementById('v1-row');
             const v2Row = document.getElementById('v2-row');
+            
+            // UI Interlock handling
             if (v1Row) v1Row.classList.toggle('disabled', !mActive);
             if (v2Row) v2Row.classList.toggle('disabled', !mActive);
             if (valve1OnBox) valve1OnBox.disabled = !mActive;
@@ -333,12 +335,21 @@ if (renderChartBtn) {
     };
 }
 
-// Manual Controls (Step 3: Refactored writes using update())
+// Manual Controls with Interlock Functionality
 const motorOnCheckbox = document.getElementById('motor_on');
 if (motorOnCheckbox) {
     motorOnCheckbox.onchange = (e) => {
         if (phoneNumber) {
-            update(ref(db, `users/${phoneNumber}`), { motor_on: e.target.checked });
+            const isChecked = e.target.checked;
+            const updates = { motor_on: isChecked };
+
+            // DATABASE INTERLOCK LOGIC: If motor turns OFF, force both valves to update to false synchronously
+            if (isChecked === false) {
+                updates.valve1_on = false;
+                updates.valve2_on = false;
+            }
+
+            update(ref(db, `users/${phoneNumber}`), updates);
         }
     };
 }
