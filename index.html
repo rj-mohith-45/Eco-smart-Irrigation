@@ -12,7 +12,7 @@
 
 <body>
 
-    <!-- Step 2: Login Section Container (matches color scheme, hidden/shown via Auth states) -->
+    <!-- Step 2: Login Section Container -->
     <div id="login-container" class="login-wrapper">
         <div class="login-card">
             <div class="login-header">
@@ -40,7 +40,7 @@
         </div>
     </div>
 
-    <!-- Step 2: Existing Dashboard HTML wrapped in a container that is hidden by default -->
+    <!-- Step 2: Dashboard Container -->
     <div class="glass-container" id="dashboard-container" style="display: none;">
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -93,7 +93,7 @@
                 <header class="header">
                     <h1>Field Status</h1>
                     <div style="display: flex; gap: 15px; align-items: center;">
-                        <!-- Step 2: Sign Out Button added to the main header -->
+                        <!-- Sign Out Button -->
                         <button id="btn-signout" class="nav-btn" style="border-color: rgba(239, 68, 68, 0.3); color: #ef4444; padding: 6px 12px; font-size: 0.9rem; border-radius: 8px; cursor: pointer; background: none; transition: 0.3s; font-weight: 600;">🚪 Sign Out</button>
                         <div class="sync-pill"><span class="dot"></span> <span id="sync-text">Syncing...</span></div>
                     </div>
@@ -130,13 +130,14 @@
                                 <div><strong>Master Motor</strong><br><span class="sub-text">Primary Pump</span></div>
                                   <label class="toggle-ui"><input type="checkbox" id="motor_on"><span class="slider"></span></label>
                             </div>
-                            <div class="control-row v-row disabled" id="v1-row">
+                            <!-- Disabled classes and attributes removed from these rows -->
+                            <div class="control-row v-row" id="v1-row">
                                 <div><strong>Valve 1</strong><br><span class="sub-text">Zone A</span></div>
-                                <label class="toggle-ui"><input type="checkbox" id="valve1_on" disabled><span class="slider"></span></label>
+                                <label class="toggle-ui"><input type="checkbox" id="valve1_on"><span class="slider"></span></label>
                             </div>
-                            <div class="control-row v-row disabled" id="v2-row">
+                            <div class="control-row v-row" id="v2-row">
                                 <div><strong>Valve 2</strong><br><span class="sub-text">Zone B</span></div>
-                                <label class="toggle-ui"><input type="checkbox" id="valve2_on" disabled><span class="slider"></span></label>
+                                <label class="toggle-ui"><input type="checkbox" id="valve2_on"><span class="slider"></span></label>
                             </div>
                         </div>
                     </section>
