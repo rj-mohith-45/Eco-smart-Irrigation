@@ -18,7 +18,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-// INIT GEMINI AI (⚠️ SECURITY WARNING: Replace with your key for local testing, keep placeholder on GitHub)
+// INIT GEMINI AI (Placeholder to keep your account secure on GitHub)
 const genAI = new GoogleGenerativeAI("YOUR_GEMINI_API_KEY");
 let activeSystemState = {};
 let uploadedBase64Image = null;
@@ -161,7 +161,7 @@ if (btnSignout) {
     btnSignout.onclick = handleSignOut;
 }
 
-// Monitor Auth State Changes (Multi-tenant path gating)
+// Monitor Auth State Changes
 onAuthStateChanged(auth, (user) => {
     const dashboard = document.getElementById('dashboard-container');
     const login = document.getElementById('login-container');
@@ -171,7 +171,7 @@ onAuthStateChanged(auth, (user) => {
         if (dashboard) dashboard.style.display = 'flex';
         log("Authenticated as " + phoneNumber);
 
-        // Realtime Firebase State (Step 3: Multi-tenant database listeners under users/phoneNumber)
+        // Realtime Firebase State
         if (dbUnsubscribe) dbUnsubscribe();
         dbUnsubscribe = onValue(ref(db, `/users/${phoneNumber}`), (snapshot) => {
             const data = snapshot.val(); if (!data) return;
@@ -202,15 +202,14 @@ onAuthStateChanged(auth, (user) => {
             if (valve2OnBox) valve2OnBox.checked = data.valve2_on || false;
             if (autoLogicMasterBox) autoLogicMasterBox.checked = data.auto_mode || false;
 
-            const mActive = data.motor_on || false;
             const v1Row = document.getElementById('v1-row');
             const v2Row = document.getElementById('v2-row');
             
-            // UI Interlock handling
-            if (v1Row) v1Row.classList.toggle('disabled', !mActive);
-            if (v2Row) v2Row.classList.toggle('disabled', !mActive);
-            if (valve1OnBox) valve1OnBox.disabled = !mActive;
-            if (valve2OnBox) valve2OnBox.disabled = !mActive;
+            // Force the valves to be fully unlocked and clickable at all times
+            if (v1Row) v1Row.classList.remove('disabled');
+            if (v2Row) v2Row.classList.remove('disabled');
+            if (valve1OnBox) valve1OnBox.disabled = false;
+            if (valve2OnBox) valve2OnBox.disabled = false;
 
             // Sync thresholds to input elements if available
             const v1OnThresh = document.getElementById('v1_on_thresh');
@@ -259,7 +258,7 @@ function updateGauge(fillId, valId, value) {
     fill.style.stroke = percent < 30 ? "#ef4444" : (percent < 75 ? "#10b981" : "#3b82f6");
 }
 
-// Chart Rendering Logic (Two Charts)
+// Chart Rendering Logic
 const renderChartBtn = document.getElementById('btn-render-chart');
 if (renderChartBtn) {
     renderChartBtn.onclick = async () => {
@@ -292,7 +291,6 @@ if (renderChartBtn) {
                     savedArray.push(parseFloat(saved));
                 });
 
-                // Chart 1: Usage
                 const ctxUsage = document.getElementById('usageChart').getContext('2d');
                 if (window.usageChartInstance) window.usageChartInstance.destroy();
                 window.usageChartInstance = new Chart(ctxUsage, {
@@ -304,7 +302,6 @@ if (renderChartBtn) {
                     options: { responsive: true, maintainAspectRatio: false }
                 });
 
-                // Chart 2: Saved
                 const ctxSaved = document.getElementById('savedChart').getContext('2d');
                 if (window.savedChartInstance) window.savedChartInstance.destroy();
                 window.savedChartInstance = new Chart(ctxSaved, {
@@ -335,21 +332,12 @@ if (renderChartBtn) {
     };
 }
 
-// Manual Controls with Interlock Functionality
+// Independent Manual Controls 
 const motorOnCheckbox = document.getElementById('motor_on');
 if (motorOnCheckbox) {
     motorOnCheckbox.onchange = (e) => {
         if (phoneNumber) {
-            const isChecked = e.target.checked;
-            const updates = { motor_on: isChecked };
-
-            // DATABASE INTERLOCK LOGIC: If motor turns OFF, force both valves to update to false synchronously
-            if (isChecked === false) {
-                updates.valve1_on = false;
-                updates.valve2_on = false;
-            }
-
-            update(ref(db, `users/${phoneNumber}`), updates);
+            update(ref(db, `users/${phoneNumber}`), { motor_on: e.target.checked });
         }
     };
 }
