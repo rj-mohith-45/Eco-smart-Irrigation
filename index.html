@@ -12,35 +12,30 @@
 
 <body>
 
-    <!-- Step 2: Login Section Container -->
+    <!-- Login Section Container for Email & Password -->
     <div id="login-container" class="login-wrapper">
         <div class="login-card">
             <div class="login-header">
                 <span class="login-logo">🌿</span>
                 <h2>EcoSmart Irrigation</h2>
-                <p>Verify your phone number to access the dashboard</p>
+                <p>Sign in with your email and password to access the dashboard</p>
             </div>
-            <div id="phone-step">
+            <div id="email-login-step">
                 <div class="input-field-group">
-                    <label for="phone-number">Phone Number</label>
-                    <input type="tel" id="phone-number" placeholder="+91XXXXXXXXXX" value="+91">
+                    <label for="email-address">Email Address</label>
+                    <input type="email" id="email-address" placeholder="user@example.com">
                 </div>
-                <div id="recaptcha-container"></div>
-                <button id="btn-send-otp" class="btn-primary">Send Verification Code</button>
-            </div>
-            <div id="otp-step" style="display: none;">
                 <div class="input-field-group">
-                    <label for="otp-code">Verification Code</label>
-                    <input type="text" id="otp-code" placeholder="Enter 6-digit OTP">
+                    <label for="user-password">Password</label>
+                    <input type="password" id="user-password" placeholder="Enter password">
                 </div>
-                <button id="btn-verify-otp" class="btn-primary">Verify & Login</button>
-                <button id="btn-back-phone" class="btn-secondary">Change Phone Number</button>
+                <button id="btn-login-email" class="btn-primary">Sign In & Access</button>
             </div>
             <div id="login-error" class="error-msg" style="display: none;"></div>
         </div>
     </div>
 
-    <!-- Step 2: Dashboard Container -->
+    <!-- Step 2: Existing Dashboard HTML wrapped in a container that is hidden by default -->
     <div class="glass-container" id="dashboard-container" style="display: none;">
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -62,6 +57,11 @@
                 <!-- Sidebar signout option -->
                 <button id="nav-logout" class="nav-btn" style="margin-top: 15px; border-color: rgba(239, 68, 68, 0.3); color: #ef4444;">🚪 Logout</button>
             </nav>
+
+            <div class="sidebar-api-key-box" style="margin-top: 20px; padding: 15px 0 0 0; border-top: 1px solid rgba(255,255,255,0.1);">
+                <label for="gemini-api-key" style="font-size: 0.85rem; color: rgba(255,255,255,0.6); display: block; margin-bottom: 8px;">🧠 Gemini API Key</label>
+                <input type="password" id="gemini-api-key" placeholder="Paste your API key here" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2); color: #ffffff; font-size: 0.85rem; box-sizing: border-box;">
+            </div>
 
             <div class="compact-setting">
                 <span>Auto Logic Master</span>
@@ -93,7 +93,7 @@
                 <header class="header">
                     <h1>Field Status</h1>
                     <div style="display: flex; gap: 15px; align-items: center;">
-                        <!-- Sign Out Button -->
+                        <!-- Step 2: Sign Out Button added to the main header -->
                         <button id="btn-signout" class="nav-btn" style="border-color: rgba(239, 68, 68, 0.3); color: #ef4444; padding: 6px 12px; font-size: 0.9rem; border-radius: 8px; cursor: pointer; background: none; transition: 0.3s; font-weight: 600;">🚪 Sign Out</button>
                         <div class="sync-pill"><span class="dot"></span> <span id="sync-text">Syncing...</span></div>
                     </div>
@@ -130,7 +130,6 @@
                                 <div><strong>Master Motor</strong><br><span class="sub-text">Primary Pump</span></div>
                                   <label class="toggle-ui"><input type="checkbox" id="motor_on"><span class="slider"></span></label>
                             </div>
-                            <!-- Disabled classes and attributes removed from these rows -->
                             <div class="control-row v-row" id="v1-row">
                                 <div><strong>Valve 1</strong><br><span class="sub-text">Zone A</span></div>
                                 <label class="toggle-ui"><input type="checkbox" id="valve1_on"><span class="slider"></span></label>
