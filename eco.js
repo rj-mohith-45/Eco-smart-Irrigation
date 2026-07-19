@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, RecaptchaVerifier, signInWithPhoneNumber, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getDatabase, ref, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
@@ -18,8 +18,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
-// INIT GEMINI AI (Placeholder to keep your account secure on GitHub)
-const genAI = new GoogleGenerativeAI("YOUR_GEMINI_API_KEY");
+// Gemini AI initialized dynamically per request via user key
 let activeSystemState = {};
 let uploadedBase64Image = null;
 
@@ -56,88 +55,75 @@ btnClasses.forEach(item => {
     }
 });
 
+// Hamburger Menu & Mobile Sidebar toggles
+const hamburgerMenus = document.querySelectorAll('.hamburger-menu');
+const sidebar = document.querySelector('.sidebar');
+
+if (sidebar) {
+    hamburgerMenus.forEach(btn => {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            sidebar.classList.toggle('active');
+        };
+    });
+
+    // Close sidebar when clicking a navigation button
+    const navButtons = document.querySelectorAll('.nav-btn');
+    navButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+        });
+    });
+
+    // Close sidebar when clicking outside of it
+    document.addEventListener('click', (e) => {
+        if (!sidebar.contains(e.target) && !e.target.classList.contains('hamburger-menu')) {
+            sidebar.classList.remove('active');
+        }
+    });
+}
+
+// Load/Save Gemini API Key from Sidebar input
+const apiKeyInput = document.getElementById('gemini-api-key');
+if (apiKeyInput) {
+    const savedKey = localStorage.getItem('gemini_api_key') || '';
+    apiKeyInput.value = savedKey;
+    apiKeyInput.oninput = (e) => {
+        localStorage.setItem('gemini_api_key', e.target.value.trim());
+    };
+}
+
 // Authentication & Realtime State
-let phoneNumber = null;
+let userUid = null;
 let dbUnsubscribe = null;
 
-// Setup invisible reCAPTCHA
-window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-    'size': 'invisible'
-});
-
-let confirmationResult = null;
-
-const sendOtpBtn = document.getElementById('btn-send-otp');
-if (sendOtpBtn) {
-    sendOtpBtn.onclick = async () => {
-        const phoneInput = document.getElementById('phone-number').value.trim();
+// Handle Email & Password Sign In
+const loginBtn = document.getElementById('btn-login-email');
+if (loginBtn) {
+    loginBtn.onclick = async () => {
+        const email = document.getElementById('email-address').value.trim();
+        const password = document.getElementById('user-password').value.trim();
         const errorDiv = document.getElementById('login-error');
         if (errorDiv) errorDiv.style.display = 'none';
 
-        if (!phoneInput.startsWith('+') || phoneInput.length < 10) {
+        if (!email || !password) {
             if (errorDiv) {
-                errorDiv.innerText = "Please enter a valid phone number including country code (e.g., +919876543210)";
+                errorDiv.innerText = "Please enter both email and password.";
                 errorDiv.style.display = 'block';
             }
             return;
         }
 
         try {
-            const appVerifier = window.recaptchaVerifier;
-            confirmationResult = await signInWithPhoneNumber(auth, phoneInput, appVerifier);
-            const phoneStep = document.getElementById('phone-step');
-            const otpStep = document.getElementById('otp-step');
-            if (phoneStep) phoneStep.style.display = 'none';
-            if (otpStep) otpStep.style.display = 'block';
-            log("Verification code sent to " + phoneInput);
+            const result = await signInWithEmailAndPassword(auth, email, password);
+            log("User signed in: " + result.user.email);
         } catch (error) {
-            console.error("SMS Send Error:", error);
+            console.error("Login Error:", error);
             if (errorDiv) {
                 errorDiv.innerText = error.message;
                 errorDiv.style.display = 'block';
             }
         }
-    };
-}
-
-const verifyOtpBtn = document.getElementById('btn-verify-otp');
-if (verifyOtpBtn) {
-    verifyOtpBtn.onclick = async () => {
-        const otpCode = document.getElementById('otp-code').value.trim();
-        const errorDiv = document.getElementById('login-error');
-        if (errorDiv) errorDiv.style.display = 'none';
-
-        if (otpCode.length !== 6) {
-            if (errorDiv) {
-                errorDiv.innerText = "Please enter a 6-digit verification code.";
-                errorDiv.style.display = 'block';
-            }
-            return;
-        }
-
-        try {
-            const result = await confirmationResult.confirm(otpCode);
-            const user = result.user;
-            log("User signed in: " + user.phoneNumber);
-        } catch (error) {
-            console.error("OTP Verification Error:", error);
-            if (errorDiv) {
-                errorDiv.innerText = "Invalid verification code. Please try again.";
-                errorDiv.style.display = 'block';
-            }
-        }
-    };
-}
-
-const backPhoneBtn = document.getElementById('btn-back-phone');
-if (backPhoneBtn) {
-    backPhoneBtn.onclick = () => {
-        const phoneStep = document.getElementById('phone-step');
-        const otpStep = document.getElementById('otp-step');
-        const errorDiv = document.getElementById('login-error');
-        if (otpStep) otpStep.style.display = 'none';
-        if (phoneStep) phoneStep.style.display = 'block';
-        if (errorDiv) errorDiv.style.display = 'none';
     };
 }
 
@@ -161,19 +147,19 @@ if (btnSignout) {
     btnSignout.onclick = handleSignOut;
 }
 
-// Monitor Auth State Changes
+// Monitor Auth State Changes (Multi-tenant path gating using UID)
 onAuthStateChanged(auth, (user) => {
     const dashboard = document.getElementById('dashboard-container');
     const login = document.getElementById('login-container');
     if (user) {
-        phoneNumber = user.phoneNumber;
+        userUid = user.uid;
         if (login) login.style.display = 'none';
         if (dashboard) dashboard.style.display = 'flex';
-        log("Authenticated as " + phoneNumber);
+        log("Authenticated as " + user.email);
 
-        // Realtime Firebase State
+        // Realtime Firebase State (Step 3: Multi-tenant database listeners under users/userUid)
         if (dbUnsubscribe) dbUnsubscribe();
-        dbUnsubscribe = onValue(ref(db, `/users/${phoneNumber}`), (snapshot) => {
+        dbUnsubscribe = onValue(ref(db, `/users/${userUid}`), (snapshot) => {
             const data = snapshot.val(); if (!data) return;
             activeSystemState = data;
 
@@ -202,15 +188,6 @@ onAuthStateChanged(auth, (user) => {
             if (valve2OnBox) valve2OnBox.checked = data.valve2_on || false;
             if (autoLogicMasterBox) autoLogicMasterBox.checked = data.auto_mode || false;
 
-            const v1Row = document.getElementById('v1-row');
-            const v2Row = document.getElementById('v2-row');
-            
-            // Force the valves to be fully unlocked and clickable at all times
-            if (v1Row) v1Row.classList.remove('disabled');
-            if (v2Row) v2Row.classList.remove('disabled');
-            if (valve1OnBox) valve1OnBox.disabled = false;
-            if (valve2OnBox) valve2OnBox.disabled = false;
-
             // Sync thresholds to input elements if available
             const v1OnThresh = document.getElementById('v1_on_thresh');
             const v1OffThresh = document.getElementById('v1_off_thresh');
@@ -226,25 +203,21 @@ onAuthStateChanged(auth, (user) => {
             log("Database Sync Error: " + error.message, "error");
         });
     } else {
-        phoneNumber = null;
+        userUid = null;
         if (dbUnsubscribe) {
             dbUnsubscribe();
             dbUnsubscribe = null;
         }
         if (dashboard) dashboard.style.display = 'none';
         if (login) login.style.display = 'flex';
-        // Reset step state
-        const phoneStep = document.getElementById('phone-step');
-        const otpStep = document.getElementById('otp-step');
+        
+        // Reset form inputs
+        const emailInput = document.getElementById('email-address');
+        const passInput = document.getElementById('user-password');
         const errorDiv = document.getElementById('login-error');
-        const phoneInput = document.getElementById('phone-number');
-        const otpCodeInput = document.getElementById('otp-code');
-
-        if (phoneStep) phoneStep.style.display = 'block';
-        if (otpStep) otpStep.style.display = 'none';
+        if (emailInput) emailInput.value = "";
+        if (passInput) passInput.value = "";
         if (errorDiv) errorDiv.style.display = 'none';
-        if (phoneInput) phoneInput.value = "+91";
-        if (otpCodeInput) otpCodeInput.value = "";
     }
 });
 
@@ -258,11 +231,11 @@ function updateGauge(fillId, valId, value) {
     fill.style.stroke = percent < 30 ? "#ef4444" : (percent < 75 ? "#10b981" : "#3b82f6");
 }
 
-// Chart Rendering Logic
+// Chart Rendering Logic (Two Charts)
 const renderChartBtn = document.getElementById('btn-render-chart');
 if (renderChartBtn) {
     renderChartBtn.onclick = async () => {
-        if (!phoneNumber) return;
+        if (!userUid) return;
         const dist = parseFloat(document.getElementById('calc-dist').value);
         const speed = parseFloat(document.getElementById('calc-speed').value);
         const flow = parseFloat(document.getElementById('calc-flow').value);
@@ -270,7 +243,7 @@ if (renderChartBtn) {
         const travelTimeMins = (dist / speed) * 60;
 
         try {
-            const snapshot = await get(ref(db, `users/${phoneNumber}/daily_logs`));
+            const snapshot = await get(ref(db, `users/${userUid}/daily_logs`));
             if (snapshot.exists()) {
                 const logs = snapshot.val();
                 const dates = Object.keys(logs);
@@ -291,6 +264,7 @@ if (renderChartBtn) {
                     savedArray.push(parseFloat(saved));
                 });
 
+                // Chart 1: Usage
                 const ctxUsage = document.getElementById('usageChart').getContext('2d');
                 if (window.usageChartInstance) window.usageChartInstance.destroy();
                 window.usageChartInstance = new Chart(ctxUsage, {
@@ -302,6 +276,7 @@ if (renderChartBtn) {
                     options: { responsive: true, maintainAspectRatio: false }
                 });
 
+                // Chart 2: Saved
                 const ctxSaved = document.getElementById('savedChart').getContext('2d');
                 if (window.savedChartInstance) window.savedChartInstance.destroy();
                 window.savedChartInstance = new Chart(ctxSaved, {
@@ -332,12 +307,12 @@ if (renderChartBtn) {
     };
 }
 
-// Independent Manual Controls 
+// Manual Controls (Step 3: Refactored writes using update())
 const motorOnCheckbox = document.getElementById('motor_on');
 if (motorOnCheckbox) {
     motorOnCheckbox.onchange = (e) => {
-        if (phoneNumber) {
-            update(ref(db, `users/${phoneNumber}`), { motor_on: e.target.checked });
+        if (userUid) {
+            update(ref(db, `users/${userUid}`), { motor_on: e.target.checked });
         }
     };
 }
@@ -345,8 +320,8 @@ if (motorOnCheckbox) {
 const valve1Checkbox = document.getElementById('valve1_on');
 if (valve1Checkbox) {
     valve1Checkbox.onchange = (e) => {
-        if (phoneNumber) {
-            update(ref(db, `users/${phoneNumber}`), { valve1_on: e.target.checked });
+        if (userUid) {
+            update(ref(db, `users/${userUid}`), { valve1_on: e.target.checked });
         }
     };
 }
@@ -354,8 +329,8 @@ if (valve1Checkbox) {
 const valve2Checkbox = document.getElementById('valve2_on');
 if (valve2Checkbox) {
     valve2Checkbox.onchange = (e) => {
-        if (phoneNumber) {
-            update(ref(db, `users/${phoneNumber}`), { valve2_on: e.target.checked });
+        if (userUid) {
+            update(ref(db, `users/${userUid}`), { valve2_on: e.target.checked });
         }
     };
 }
@@ -363,8 +338,8 @@ if (valve2Checkbox) {
 const autoLogicMasterCheckbox = document.getElementById('auto_logic_master');
 if (autoLogicMasterCheckbox) {
     autoLogicMasterCheckbox.onchange = (e) => {
-        if (phoneNumber) {
-            update(ref(db, `users/${phoneNumber}`), { auto_mode: e.target.checked });
+        if (userUid) {
+            update(ref(db, `users/${userUid}`), { auto_mode: e.target.checked });
         }
     };
 }
@@ -373,13 +348,13 @@ if (autoLogicMasterCheckbox) {
 const saveAutoBtn = document.getElementById('btn-save-auto');
 if (saveAutoBtn) {
     saveAutoBtn.onclick = () => {
-        if (!phoneNumber) return;
+        if (!userUid) return;
         const v1On = parseInt(document.getElementById('v1_on_thresh').value);
         const v1Off = parseInt(document.getElementById('v1_off_thresh').value);
         const v2On = parseInt(document.getElementById('v2_on_thresh').value);
         const v2Off = parseInt(document.getElementById('v2_off_thresh').value);
 
-        update(ref(db, `users/${phoneNumber}`), {
+        update(ref(db, `users/${userUid}`), {
             valve1_on_threshold: v1On,
             valve1_off_threshold: v1Off,
             valve2_on_threshold: v2On,
@@ -450,7 +425,12 @@ if (analyzePhotoBtn) {
         }
 
         try {
-            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+            const userApiKey = localStorage.getItem('gemini_api_key') || '';
+            if (!userApiKey) {
+                throw new Error("Please paste your Gemini API Key in the sidebar menu first.");
+            }
+            const genAI = new GoogleGenerativeAI(userApiKey);
+            const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash" });
 
             const ctx = activeSystemState;
             const contextInfo = `
