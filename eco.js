@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getDatabase, ref, onValue, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue, update, get, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 import { GoogleGenerativeAI } from "https://esm.run/@google/generative-ai";
 
 // STEP 1: Firebase configuration
@@ -307,12 +307,12 @@ if (renderChartBtn) {
     };
 }
 
-// Manual Controls (Step 3: Refactored writes using update())
+// Manual Controls (Refactored to mimic Firebase Console exact paths using set())
 const motorOnCheckbox = document.getElementById('motor_on');
 if (motorOnCheckbox) {
     motorOnCheckbox.onchange = (e) => {
         if (userUid) {
-            update(ref(db, `users/${userUid}`), { motor_on: e.target.checked });
+            set(ref(db, `users/${userUid}/motor_on`), e.target.checked);
         }
     };
 }
@@ -321,7 +321,7 @@ const valve1Checkbox = document.getElementById('valve1_on');
 if (valve1Checkbox) {
     valve1Checkbox.onchange = (e) => {
         if (userUid) {
-            update(ref(db, `users/${userUid}`), { valve1_on: e.target.checked });
+            set(ref(db, `users/${userUid}/valve1_on`), e.target.checked);
         }
     };
 }
@@ -330,7 +330,7 @@ const valve2Checkbox = document.getElementById('valve2_on');
 if (valve2Checkbox) {
     valve2Checkbox.onchange = (e) => {
         if (userUid) {
-            update(ref(db, `users/${userUid}`), { valve2_on: e.target.checked });
+            set(ref(db, `users/${userUid}/valve2_on`), e.target.checked);
         }
     };
 }
@@ -339,7 +339,7 @@ const autoLogicMasterCheckbox = document.getElementById('auto_logic_master');
 if (autoLogicMasterCheckbox) {
     autoLogicMasterCheckbox.onchange = (e) => {
         if (userUid) {
-            update(ref(db, `users/${userUid}`), { auto_mode: e.target.checked });
+            set(ref(db, `users/${userUid}/auto_mode`), e.target.checked);
         }
     };
 }
