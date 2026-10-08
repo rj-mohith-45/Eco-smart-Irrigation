@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EcoSmart Irrigation Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="capacitor.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="eco.css">
+</head>
+
+<body>
+
+    <!-- Login Section Container for Email & Password -->
+    <div id="login-container" class="login-wrapper">
+        <div class="login-card">
+            <div class="login-header">
+                <span class="login-logo">🌿</span>
+                <h2>EcoSmart Irrigation</h2>
+                <p>Sign in with your email and password to access the dashboard</p>
+            </div>
+            <div id="email-login-step">
+                <div class="input-field-group">
+                    <label for="email-address">Email Address</label>
+                    <input type="email" id="email-address" placeholder="user@example.com">
+                </div>
+                <div class="input-field-group">
+                    <label for="user-password">Password</label>
+                    <input type="password" id="user-password" placeholder="Enter password">
+                </div>
+                <button id="btn-login-email" class="btn-primary">Sign In & Access</button>
+                <button id="btn-quick-fill-esp32" class="btn-secondary" style="margin-top: 10px; border-color: rgba(16, 185, 129, 0.4); color: #10b981;">⚡ Auto-Fill ESP32 Device Account</button>
+            </div>
+            <div style="margin-top: 12px; font-size: 0.8rem; color: var(--dim); text-align: center;">
+                IoT Hardware Account: <code>esp32@ecosmart.com</code>
+            </div>
+            <div id="login-error" class="error-msg" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- Step 2: Existing Dashboard HTML wrapped in a container that is hidden by default -->
+    <div class="glass-container" id="dashboard-container" style="display: none;">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="brand">🌿 <h2>EcoSmart</h2>
+                </div>
+                <div class="theme-toggle-container">
+                    <span id="theme-text" class="theme-label">Dark Mode</span>
+                    <label class="toggle-ui">
+                        <input type="checkbox" id="theme-checkbox">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <button id="nav-home" class="nav-btn active">🏠 Home</button>
+                <button id="nav-auto" class="nav-btn">⚙️ Auto Console</button>
+                <button id="nav-ai" class="nav-btn">🧠 AI & Analytics</button>
+                <!-- Sidebar signout option -->
+                <button id="nav-logout" class="nav-btn" style="margin-top: 15px; border-color: rgba(239, 68, 68, 0.3); color: #ef4444;">🚪 Logout</button>
+            </nav>
+
+            <div class="compact-setting">
+                <span>Auto Logic Master</span>
+                <label class="toggle-ui">
+                    <input type="checkbox" id="auto_logic_master">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="status-card" id="weather-box">
+                <div id="weather-icon">☀️</div>
+                <h3 id="weather-text">Clear Skies</h3>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <!-- View 1: Home/Field Status -->
+            <div id="view-home" class="view-panel">
+                <header class="header">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <button class="hamburger-menu">☰</button>
+                        <h1 style="margin: 0;">Field Status</h1>
+                    </div>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <!-- Step 2: Sign Out Button added to the main header -->
+                        <button id="btn-signout" class="nav-btn" style="border-color: rgba(239, 68, 68, 0.3); color: #ef4444; padding: 6px 12px; font-size: 0.9rem; border-radius: 8px; cursor: pointer; background: none; transition: 0.3s; font-weight: 600;">🚪 Sign Out</button>
+                        <div class="sync-pill"><span class="dot"></span> <span id="sync-text">Syncing...</span></div>
+                    </div>
+                </header>
+
+                <!-- Connected Account & ESP32 Link Banner -->
+                <div id="account-banner" style="display: none;" class="account-status-banner">
+                    <span id="account-banner-text">Logged in.</span>
+                    <button id="btn-banner-switch" class="btn-banner-action">Switch to ESP32 Account</button>
+                </div>
+
+                <section class="gauge-section">
+                    <div class="card gauge-card">
+                        <div class="svg-wrapper">
+                            <svg viewBox="0 0 100 55">
+                                <path fill="none" class="gauge-bg" d="M10,50 A40,40 0 0,1 90,50" />
+                                <path fill="none" class="gauge-fill" id="fill1" d="M10,50 A40,40 0 0,1 90,50" />
+                            </svg>
+                            <div class="gauge-info"><span class="gauge-val" id="val1">0</span>%</div>
+                        </div>
+                        <h4>Zone 1 Moisture</h4>
+                    </div>
+                    <div class="card gauge-card">
+                        <div class="svg-wrapper">
+                            <svg viewBox="0 0 100 55">
+                                <path fill="none" class="gauge-bg" d="M10,50 A40,40 0 0,1 90,50" />
+                                <path fill="none" class="gauge-fill" id="fill2" d="M10,50 A40,40 0 0,1 90,50" />
+                            </svg>
+                            <div class="gauge-info"><span class="gauge-val" id="val2">0</span>%</div>
+                        </div>
+                        <h4>Zone 2 Moisture</h4>
+                    </div>
+                </section>
+
+                <!-- Robust Live Soil Moisture Dynamics Chart -->
+                <section class="card chart-card">
+                    <div class="chart-header">
+                        <div>
+                            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                                <h3 style="margin: 0; font-size: 1.25rem;">📈 Soil Moisture Dynamics</h3>
+                                <span class="live-indicator"><span class="live-pulse"></span>LIVE TELEMETRY</span>
+                            </div>
+                            <p class="sub-text" style="margin: 4px 0 0 0;">Real-time soil moisture trends, live progression & threshold tracking</p>
+                        </div>
+                        <div class="chart-filter-group">
+                            <button id="chart-filter-all" class="chart-pill-btn active">All Zones</button>
+                            <button id="chart-filter-z1" class="chart-pill-btn">Zone 1 (A)</button>
+                            <button id="chart-filter-z2" class="chart-pill-btn">Zone 2 (B)</button>
+                        </div>
+                    </div>
+
+                    <!-- Moisture Stats Overview Chips -->
+                    <div class="chart-stat-grid">
+                        <div class="chart-stat-chip z1-chip">
+                            <div class="stat-chip-header">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="chip-dot z1-dot"></span>
+                                    <span class="chip-title">Zone 1 (Zone A)</span>
+                                </div>
+                                <span class="chip-badge" id="z1-status-badge">Optimal</span>
+                            </div>
+                            <div class="stat-chip-body">
+                                <span class="stat-main-val z1-val-color" id="stat-z1-current">--%</span>
+                                <div class="stat-sub-vals">
+                                    <span>Min: <b id="stat-z1-min">--</b>%</span>
+                                    <span>Max: <b id="stat-z1-max">--</b>%</span>
+                                    <span>Avg: <b id="stat-z1-avg">--</b>%</span>
+                                </div>
+                            </div>
+                            <div class="stat-thresh-info">ON below <b><span id="stat-z1-on-th">45</span>%</b> | OFF above <b><span id="stat-z1-off-th">78</span>%</b></div>
+                        </div>
+
+                        <div class="chart-stat-chip z2-chip">
+                            <div class="stat-chip-header">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span class="chip-dot z2-dot"></span>
+                                    <span class="chip-title">Zone 2 (Zone B)</span>
+                                </div>
+                                <span class="chip-badge" id="z2-status-badge">Optimal</span>
+                            </div>
+                            <div class="stat-chip-body">
+                                <span class="stat-main-val z2-val-color" id="stat-z2-current">--%</span>
+                                <div class="stat-sub-vals">
+                                    <span>Min: <b id="stat-z2-min">--</b>%</span>
+                                    <span>Max: <b id="stat-z2-max">--</b>%</span>
+                                    <span>Avg: <b id="stat-z2-avg">--</b>%</span>
+                                </div>
+                            </div>
+                            <div class="stat-thresh-info">ON below <b><span id="stat-z2-on-th">44</span>%</b> | OFF above <b><span id="stat-z2-off-th">66</span>%</b></div>
+                        </div>
+                    </div>
+
+                    <div class="moisture-chart-container">
+                        <canvas id="moistureLiveChart"></canvas>
+                    </div>
+                </section>
+
+                <div class="control-grid">
+                    <section class="card">
+                        <h3>Manual Control</h3>
+                        <div class="control-list">
+                            <div class="control-row master">
+                                <div><strong>Master Motor</strong><br><span class="sub-text">Primary Pump</span></div>
+                                <label class="toggle-ui"><input type="checkbox" id="motor_on"><span class="slider"></span></label>
+                            </div>
+                            <div class="control-row v-row" id="v1-row">
+                                <div><strong>Valve 1</strong><br><span class="sub-text">Zone A</span></div>
+                                <label class="toggle-ui"><input type="checkbox" id="valve1_on"><span class="slider"></span></label>
+                            </div>
+                            <div class="control-row v-row" id="v2-row">
+                                <div><strong>Valve 2</strong><br><span class="sub-text">Zone B</span></div>
+                                <label class="toggle-ui"><input type="checkbox" id="valve2_on"><span class="slider"></span></label>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Real-Time Activity Feed on Main Dashboard (Accessible on both Mobile & Desktop) -->
+                    <section class="card activity-dashboard-card">
+                        <div class="panel-header">
+                            <div>
+                                <h3 style="margin: 0;">Live System Logs</h3>
+                                <p class="sub-text" style="margin: 3px 0 0 0;">Real-time hardware telemetry & valve activations</p>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button id="btn-download-dash" class="log-action-btn" title="Export Logs">📥 Export</button>
+                                <button id="btn-clear-dash" class="log-action-btn" title="Clear Logs">🗑️ Clear</button>
+                            </div>
+                        </div>
+                        <div id="status-feed-dash" class="console-box console-box-dash">
+                            <p class="log-entry system"><span class="log-time">[00:00:00]</span> <span class="log-tag system-tag">SYSTEM</span> System Initialized...</p>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- View 2: Auto Configuration Thresholds -->
+            <div id="view-auto" class="view-panel" style="display:none;">
+                <header class="header">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <button class="hamburger-menu">☰</button>
+                        <div>
+                            <h1 style="margin: 0;">Auto-Irrigation Console</h1>
+                            <p class="sub-text" style="margin: 5px 0 0 0;">Configure specific ON and OFF moisture thresholds for each zone.</p>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="card setup-card">
+                    <div class="setup-item">
+                        <label>Zone 1 Thresholds</label>
+                        <div class="input-group">
+                            <div><span class="threshold-label">Turn ON below (%)</span><input type="number" id="v1_on_thresh" value="45"></div>
+                            <div><span class="threshold-label">Turn OFF above (%)</span><input type="number" id="v1_off_thresh" value="78"></div>
+                        </div>
+                    </div>
+                    <div class="setup-item" style="margin-top: 15px;">
+                        <label>Zone 2 Thresholds</label>
+                        <div class="input-group">
+                            <div><span class="threshold-label">Turn ON below (%)</span><input type="number" id="v2_on_thresh" value="44"></div>
+                            <div><span class="threshold-label">Turn OFF above (%)</span><input type="number" id="v2_off_thresh" value="66"></div>
+                        </div>
+                    </div>
+                    <button id="btn-save-auto" class="btn-primary">Apply Configuration</button>
+                </div>
+            </div>
+
+            <!-- View 3: AI & Analytics Model -->
+            <div id="view-ai" class="view-panel" style="display:none;">
+                <header class="header">
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <button class="hamburger-menu">☰</button>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <span style="font-size: 2rem;">🧠</span>
+                            <h1 style="margin: 0; color: var(--aiColor)">AI & Analytics</h1>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="card">
+                    <h3 style="margin-top: 0; color: var(--primary);">Daily Water Efficiency Model</h3>
+                    <p class="sub-text">Input your farm variables to calculate real-world savings based on ESP32 travel timers.</p>
+
+                    <div class="setup-item" style="margin-top: 15px;">
+                        <div class="input-group">
+                            <div><span class="threshold-label">Distance to Field (km)</span><input type="number" id="calc-dist" value="5"></div>
+                            <div><span class="threshold-label">Travel Speed (km/h)</span><input type="number" id="calc-speed" value="45"></div>
+                            <div><span class="threshold-label">Pump Flow Rate (L/min)</span><input type="number" id="calc-flow" value="30"></div>
+                        </div>
+                    </div>
+                    <button id="btn-render-chart" class="btn-primary" style="margin-top: 20px; width: auto; padding: 10px 20px;">Generate Log Charts</button>
+
+                    <div style="margin-top: 30px; height: 250px;">
+                        <canvas id="usageChart"></canvas>
+                    </div>
+                    <div style="margin-top: 30px; height: 250px;">
+                        <canvas id="savedChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card setup-card" style="max-width: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 12px;">
+                        <h3 style="margin: 0;">Computer Vision Analysis</h3>
+                        <button id="btn-set-gemini-key" class="btn-secondary" style="font-size: 0.8rem; padding: 6px 12px; margin: 0; width: auto; border-color: rgba(59, 130, 246, 0.4); color: #60a5fa;">🔑 Set Gemini API Key</button>
+                    </div>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <input type="file" id="ai-file-input" accept="image/*" style="display: none;">
+                        <button id="btn-select-photo" class="ai-btn">📷 Select Field Photo</button>
+                        <button id="btn-analyze-photo" class="btn-primary" style="margin-top: 0; max-width: 200px; display: none;">Analyze with AI</button>
+                        <span id="ai-loading" style="display: none; color: var(--aiColor); font-weight: bold;">Processing...</span>
+                    </div>
+                    <img id="ai-img-preview" class="img-preview" src="">
+                    <div id="ai-response-container" class="ai-result"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- External Helpers -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    
+    <!-- Step 3: Javascript treated as a module -->
+    <script type="module" src="eco.js"></script>
+</body>
+
+</html>
